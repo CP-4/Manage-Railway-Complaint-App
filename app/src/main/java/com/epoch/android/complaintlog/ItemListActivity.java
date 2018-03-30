@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.NavigationView;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
@@ -15,6 +17,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -45,22 +48,48 @@ public class ItemListActivity extends AppCompatActivity {
     RecyclerView.Adapter mAdapter;
     private List<MyDataset> listItems;
     Context acticityContext = this;
-    private static final String URL_CREATE = "172.16.234.109:5000/capp?create=True&department=money";
-
-
-
+    private DrawerLayout mDrawerLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
+        mDrawerLayout = findViewById(R.id.drawer_layout);
+
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(
+                new NavigationView.OnNavigationItemSelectedListener() {
+                    @Override
+                    public boolean onNavigationItemSelected(MenuItem menuItem) {
+                        // set item as selected to persist highlight
+                        menuItem.setChecked(true);
+                        // close drawer when item is tapped
+                        mDrawerLayout.closeDrawers();
+
+                        // Add code here to update the UI based on the item selected
+                        // For example, swap UI fragments here
+
+                        return true;
+                    }
+                });
+
+
+
+
         Log.d(TAG, "onCreate: called oncreate from start");
 //        Twitter.initialize(this);
+
+        String username = getIntent().getStringExtra("username");
+
+        final String URL_CREATE = "172.16.234.109:5000/capp?create=True&department="+username;
+
 
         setContentView(R.layout.activity_item_list);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-//        toolbar.setTitle(getResources().getString(R.string.open_complaints));
+
 //
 //        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
 //        fab.setOnClickListener(new View.OnClickListener() {
@@ -118,7 +147,7 @@ public class ItemListActivity extends AppCompatActivity {
 //        mAdapter = new MyAdapter(myDataset);
 //        recyclerView.setAdapter(mAdapter);
 
-     //   loadRecyclerViewData();
+     //   loadRecyclerViewData(URL_CREATE);
         mAdapter = new SimpleItemRecyclerViewAdapter(this, mTwoPane, this, listItems);
         recyclerView.setAdapter(mAdapter);
     }
@@ -129,7 +158,7 @@ public class ItemListActivity extends AppCompatActivity {
 //    }
 
 
-        private void loadRecyclerViewData() {
+        private void loadRecyclerViewData(String URL_CREATE) {
             final ProgressDialog progressDialog = new ProgressDialog(this);
             progressDialog.setMessage("Loading Complaints");
             progressDialog.show();
