@@ -5,10 +5,14 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
+import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -17,6 +21,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -54,42 +59,29 @@ public class ItemListActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        Log.d(TAG, "onCreate: ItemListActivity started");
+        String username = getIntent().getStringExtra("username");
+        Log.d(TAG, "onCreate: username="+username);
 
-        mDrawerLayout = findViewById(R.id.drawer_layout);
-
-        NavigationView navigationView = findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(
-                new NavigationView.OnNavigationItemSelectedListener() {
-                    @Override
-                    public boolean onNavigationItemSelected(MenuItem menuItem) {
-                        // set item as selected to persist highlight
-                        menuItem.setChecked(true);
-                        // close drawer when item is tapped
-                        mDrawerLayout.closeDrawers();
-
-                        // Add code here to update the UI based on the item selected
-                        // For example, swap UI fragments here
-
-                        return true;
-                    }
-                });
-
-
-
+        final String URL_CREATE = "172.16.234.109:5000/capp?create=True&department="+username;
 
         Log.d(TAG, "onCreate: called oncreate from start");
 //        Twitter.initialize(this);
 
-        String username = getIntent().getStringExtra("username");
-
-        final String URL_CREATE = "172.16.234.109:5000/capp?create=True&department="+username;
-
-
         setContentView(R.layout.activity_item_list);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_small);
         setSupportActionBar(toolbar);
+        Log.d(TAG, "onCreate: toolbar binded");
+        try{
+            ActionBar actionbar = getSupportActionBar();
+            actionbar.setDisplayHomeAsUpEnabled(true);
+            actionbar.setHomeAsUpIndicator(R.drawable.ic_menu_black_24dp);
+        }catch (Exception e){
+            Log.e(TAG, "onCreate: "+ e.getMessage() );
+        }
 
+        Log.d(TAG, "onCreate: action bar binded");
 //
 //        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
 //        fab.setOnClickListener(new View.OnClickListener() {
@@ -107,6 +99,33 @@ public class ItemListActivity extends AppCompatActivity {
             // activity should be in two-pane mode.
             mTwoPane = true;
         }
+
+        mDrawerLayout = findViewById(R.id.drawer_layout);
+
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        navigationView.getMenu().getItem(0).setChecked(true);
+
+        navigationView.setNavigationItemSelectedListener(
+                new NavigationView.OnNavigationItemSelectedListener() {
+                    @Override
+                    public boolean onNavigationItemSelected(MenuItem menuItem) {
+                        // set item as selected to persist highlight
+                        menuItem.setChecked(true);
+                        // close drawer when item is tapped
+                        mDrawerLayout.closeDrawers();
+
+                        if(menuItem.getItemId() == R.id.open_complaints)
+                            mDrawerLayout.closeDrawers();
+                        else if(menuItem.getItemId() == R.id.resolved_complaints){
+                            mDrawerLayout.closeDrawers();
+//                            Intent intent = new Intent(ItemListActivity.this, ResolvedItemListActivity.java);
+                        }
+                        // Add code here to update the UI based on the item selected
+                        // For example, swap UI fragments here
+
+                        return true;
+                    }
+                });
 
         RecyclerView recyclerView = findViewById(R.id.item_list);
         recyclerView.setHasFixedSize(true);
@@ -150,60 +169,83 @@ public class ItemListActivity extends AppCompatActivity {
      //   loadRecyclerViewData(URL_CREATE);
         mAdapter = new SimpleItemRecyclerViewAdapter(this, mTwoPane, this, listItems);
         recyclerView.setAdapter(mAdapter);
+        RecyclerView.ItemAnimator itemAnimator = new DefaultItemAnimator();
+        recyclerView.setItemAnimator(itemAnimator);
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                mDrawerLayout.openDrawer(GravityCompat.START);
+                return true;
+            case R.id.refresh:
+                refreshRecyclerViewData();
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.actionbar, menu);
+        return true;
+    }
 //    private void setupRecyclerView(@NonNull RecyclerView recyclerView) {
 //        recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(this, DummyContent.ITEMS, mTwoPane));
 //    }
 
 
-        private void loadRecyclerViewData(String URL_CREATE) {
-            final ProgressDialog progressDialog = new ProgressDialog(this);
-            progressDialog.setMessage("Loading Complaints");
-            progressDialog.show();
+    private void refreshRecyclerViewData() {
 
-            StringRequest stringRequest = new StringRequest(Request.Method.GET, URL_CREATE,
-                    new Response.Listener<String>() {
-                        @Override
-                        public void onResponse(String response) {
-                            try {
-                                JSONObject jsonObject = new JSONObject(response);
-                                JSONArray jsonArray = jsonObject.getJSONArray("complaints");
+    }
 
-                                for(int i=0; i<jsonArray.length(); i++) {
-                                    JSONObject jsonComplaint = jsonArray.getJSONObject(i);
-                                    MyDataset item = new MyDataset(
-                                            jsonComplaint.getInt("id"),
-                                            jsonComplaint.getString("dept"),
-                                            jsonComplaint.getString("query"),
-                                            jsonComplaint.getString("email"),
-                                            jsonComplaint.getString("pts"),
-                                            jsonComplaint.getString("train-no"),
-                                            jsonComplaint.getString("train-name"),
-                                            jsonComplaint.getString("seat-no"),
-                                            jsonComplaint.getString("station"),
-                                            jsonComplaint.getString("link"),
-                                            jsonComplaint.getInt("resolved"),
-                                            jsonComplaint.getInt("new"),
-                                            jsonComplaint.getString("time")
-                                    );
-                                listItems.add(item);
-                                }
-                            } catch (JSONException e) {
-                                e.printStackTrace();
+
+    private void loadRecyclerViewData(String URL_CREATE) {
+        final ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Loading Complaints");
+        progressDialog.show();
+
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, URL_CREATE,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            JSONObject jsonObject = new JSONObject(response);
+                            JSONArray jsonArray = jsonObject.getJSONArray("complaints");
+
+                            for(int i=0; i<jsonArray.length(); i++) {
+                                JSONObject jsonComplaint = jsonArray.getJSONObject(i);
+                                MyDataset item = new MyDataset(
+                                        jsonComplaint.getInt("id"),
+                                        jsonComplaint.getString("dept"),
+                                        jsonComplaint.getString("query"),
+                                        jsonComplaint.getString("email"),
+                                        jsonComplaint.getString("pts"),
+                                        jsonComplaint.getString("train-no"),
+                                        jsonComplaint.getString("train-name"),
+                                        jsonComplaint.getString("seat-no"),
+                                        jsonComplaint.getString("station"),
+                                        jsonComplaint.getString("link"),
+                                        jsonComplaint.getInt("resolved"),
+                                        jsonComplaint.getInt("new"),
+                                        jsonComplaint.getString("time")
+                                );
+                            listItems.add(item);
                             }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
                         }
-                    }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    progressDialog.dismiss();
-                    Log.d(TAG, "onErrorResponse: volley error");
-                }
-            });
-            RequestQueue requestQueue = Volley.newRequestQueue(this);
-            requestQueue.add(stringRequest);
-        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                progressDialog.dismiss();
+                Log.d(TAG, "onErrorResponse: volley error");
+            }
+        });
+        RequestQueue requestQueue = Volley.newRequestQueue(this);
+        requestQueue.add(stringRequest);
+    }
 
 
     public static class SimpleItemRecyclerViewAdapter
@@ -276,7 +318,10 @@ public class ItemListActivity extends AppCompatActivity {
                     Intent intent = new Intent(context, ItemDetailActivity.class);
 //                    intent.putExtra(ItemDetailFragment.ARG_ITEM_ID, item.getComplaintIdString());
                     intent.putExtra("MyDataset", item);
-                    context.startActivity(intent);
+
+
+                    mParentActivity.startActivityForResult(intent, 1);
+
                 }
 
 //                Log.d(TAG, "onClick: Extra added");
@@ -318,7 +363,12 @@ public class ItemListActivity extends AppCompatActivity {
 //            holder.itemView.setTag(mValues.get(position));
 //            holder.itemView.setOnClickListener(mOnClickListener);
             MyDataset listItem = listItems.get(position);
+
 //            Log.d(TAG, "onBindViewHolder: string" + listItem.toString());
+
+            if(listItem.getNewComplaint()==0)
+                holder.itemView.setBackgroundColor((int)R.color.gray);
+
             holder.itemView.setTag(position);
             holder.textViewComplaint.setText(listItem.getQuery());
             holder.textViewTime.setText(listItem.getTime());
@@ -330,4 +380,5 @@ public class ItemListActivity extends AppCompatActivity {
             return listItems.size();
         }
     }
+
 }

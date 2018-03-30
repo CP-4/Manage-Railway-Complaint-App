@@ -8,7 +8,10 @@
     android:layout_height="match_parent"
     app:layoutManager="LinearLayoutManager"
     tools:context="com.epoch.android.complaintlog.ItemListActivity"
-    tools:listitem="@layout/tweet" />
+    tools:listitem="@layout/tweet"
+    android:clickable="true"
+    android:focusable="true"
+    android:background="?android:attr/selectableItemBackground"/>
 
     <!--android:layout_marginLeft="16dp"-->
     <!--android:layout_marginRight="16dp"-->

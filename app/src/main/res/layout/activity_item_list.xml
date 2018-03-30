@@ -16,10 +16,10 @@
 
 
     <android.support.v7.widget.Toolbar
-        android:id="@+id/my_toolbar"
+        android:id="@+id/toolbar_small"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="#3665c2"
+        android:background="#2490d9"
         android:elevation="4dp"
         android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>

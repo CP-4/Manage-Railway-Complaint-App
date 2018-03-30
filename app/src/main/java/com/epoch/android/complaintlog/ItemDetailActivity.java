@@ -46,7 +46,11 @@ public class ItemDetailActivity extends AppCompatActivity {
     private Button buttonMarkResolved;
     private Spinner spinnerForward;
     private static final String URL_RESOLVED = "0.0.0.0";
+    private static final String URL_READ = "0.0.0.0";
     Activity activity = new Activity();
+    private TextView textViewStation;
+    private TextView textViewTrainNo;
+    private TextView textViewLink;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,16 +60,25 @@ public class ItemDetailActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         Log.d(TAG, "onCreate: "+TAG);
 
+        callApi(URL_READ);
+
         Bundle bundle = getIntent().getExtras();
         final MyDataset item = (MyDataset) getIntent().getSerializableExtra("MyDataset");
 
         textViewComplaint = findViewById(R.id.complaint_text_full);
         textViewTime = findViewById(R.id.complaint_time_full);
         textViewComplaintId = findViewById(R.id.complaint_id_full);
+        textViewStation = findViewById(R.id.text_view_station);
+        textViewTrainNo = findViewById(R.id.text_view_train_no);
+        textViewLink = findViewById(R.id.text_view_link);
 
         textViewComplaint.setText(item.getQuery());
         textViewComplaintId.setText(item.getComplaintIdString());
         textViewTime.setText(item.getTime());
+        textViewStation.setText(item.getStation());
+        String holder = item.getTrainNum()+"/"+item.getTrainName();
+        textViewTrainNo.setText(holder);
+        textViewLink.setText(item.getComplaintLink());
 
         buttonMarkResolved = findViewById(R.id.button_mark_resolved);
         spinnerForward = findViewById(R.id.spinner);
@@ -93,7 +106,7 @@ public class ItemDetailActivity extends AppCompatActivity {
 //                Context context = view.getContext();
 //                Intent intent = new Intent(context, ItemListActivity.class);
 //                    intent.putExtra(ItemDetailFragment.ARG_ITEM_ID, item.getComplaintIdString());
-                markResolved();
+                callApi(URL_RESOLVED);
                 item.complaintId = 100;
                 NavUtils.navigateUpFromSameTask(ItemDetailActivity.this);
 
@@ -139,8 +152,8 @@ public class ItemDetailActivity extends AppCompatActivity {
 //        }
     }
 
-    private void markResolved() {
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, URL_RESOLVED,
+    private void callApi(String URL) {
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, URL,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
