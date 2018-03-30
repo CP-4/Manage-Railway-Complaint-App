@@ -53,7 +53,7 @@ public class ItemListActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        Log.d(TAG, "onCreate: called oncreate from start");
 //        Twitter.initialize(this);
 
         setContentView(R.layout.activity_item_list);
@@ -186,6 +186,7 @@ public class ItemListActivity extends AppCompatActivity {
         private Context context;
         private final ItemListActivity mParentActivity;
         private List<MyDataset> listItems;
+        private int pos;
 
         public SimpleItemRecyclerViewAdapter(ItemListActivity parent, boolean mTwoPane, Context context, List<MyDataset> listItems) {
             this.mTwoPane = mTwoPane;
@@ -226,12 +227,11 @@ public class ItemListActivity extends AppCompatActivity {
 //                    Log.e(TAG, "onClick: " + e.getMessage());
 //                }
 
-                MyDataset item = (MyDataset) view.getTag();
-                Log.d(TAG, "onClick: MyDataset"+item.toString());
-//                Log.d(TAG, "onClick: view: ");
+                //MyDataset item = (MyDataset) view.getTag();
+                int pos = (int) view.getTag();
                 if (mTwoPane) {
                     Bundle arguments = new Bundle();
-                    arguments.putString(ItemDetailFragment.ARG_ITEM_ID, item.getComplaintIdString());
+//                    arguments.putString(ItemDetailFragment.ARG_ITEM_ID, item.getComplaintIdString());
                     ItemDetailFragment fragment = new ItemDetailFragment();
                     fragment.setArguments(arguments);
                     mParentActivity.getSupportFragmentManager().beginTransaction()
@@ -239,9 +239,14 @@ public class ItemListActivity extends AppCompatActivity {
                             .commit();
                 } else {
                     Context context = view.getContext();
+
+                    MyDataset item = listItems.get(pos);
+
+                    Log.d(TAG, "onClick: MyDataset "+item.getComplaintIdString()+item.getQuery()+item.getStation());
+
                     Intent intent = new Intent(context, ItemDetailActivity.class);
 //                    intent.putExtra(ItemDetailFragment.ARG_ITEM_ID, item.getComplaintIdString());
-
+                    intent.putExtra("MyDataset", item);
                     context.startActivity(intent);
                 }
 
@@ -284,7 +289,8 @@ public class ItemListActivity extends AppCompatActivity {
 //            holder.itemView.setTag(mValues.get(position));
 //            holder.itemView.setOnClickListener(mOnClickListener);
             MyDataset listItem = listItems.get(position);
-            holder.itemView.setTag(listItem);
+//            Log.d(TAG, "onBindViewHolder: string" + listItem.toString());
+            holder.itemView.setTag(position);
             holder.textViewComplaint.setText(listItem.getQuery());
             holder.textViewTime.setText(listItem.getTime());
             holder.textViewComplaintId.setText(listItem.getComplaintIdString());

@@ -100,4 +100,8 @@ public class MyDataset implements Serializable{
         return "Complaint #" + complaintId;
     }
 
+    @Override
+    public String toString() {
+        return super.toString();
+    }
 }

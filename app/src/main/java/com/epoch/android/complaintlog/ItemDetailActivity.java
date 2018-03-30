@@ -56,18 +56,16 @@ public class ItemDetailActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         Log.d(TAG, "onCreate: "+TAG);
 
-//        Bundle bundle = getIntent().getExtras();
-//        int complaintId = bundle.getInt("complaintId");
-//        String complaint = bundle.getString("complaint");
-//        String complaintTime = bundle.getString("time");
-//
-//        textViewComplaint = findViewById(R.id.complaint_text_full);
-//        textViewTime = findViewById(R.id.complaint_time_full);
-//        textViewComplaintId = findViewById(R.id.complaint_id_full);
-//
-//        textViewComplaint.setText(complaint);
-//        textViewComplaintId.setText(complaintId);
-//        textViewTime.setText(complaintTime);
+        Bundle bundle = getIntent().getExtras();
+        final MyDataset item = (MyDataset) getIntent().getSerializableExtra("MyDataset");
+
+        textViewComplaint = findViewById(R.id.complaint_text_full);
+        textViewTime = findViewById(R.id.complaint_time_full);
+        textViewComplaintId = findViewById(R.id.complaint_id_full);
+
+        textViewComplaint.setText(item.getQuery());
+        textViewComplaintId.setText(item.getComplaintIdString());
+        textViewTime.setText(item.getTime());
 
         buttonMarkResolved = findViewById(R.id.button_mark_resolved);
         spinnerForward = findViewById(R.id.spinner);
@@ -96,7 +94,9 @@ public class ItemDetailActivity extends AppCompatActivity {
 //                Intent intent = new Intent(context, ItemListActivity.class);
 //                    intent.putExtra(ItemDetailFragment.ARG_ITEM_ID, item.getComplaintIdString());
                 markResolved();
-                NavUtils.navigateUpFromSameTask(this);
+                item.complaintId = 100;
+                NavUtils.navigateUpFromSameTask(ItemDetailActivity.this);
+
             }
         });
 
