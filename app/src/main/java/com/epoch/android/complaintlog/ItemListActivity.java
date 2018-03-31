@@ -45,8 +45,19 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+
+class Temp{
+    int i;
+
+    public Temp(int i) {
+        this.i = i;
+    }
+}
+
 public class ItemListActivity extends AppCompatActivity {
 
+    private static final String HOST = "http://192.168.43.52:5000";
+    //resolved:  cappallresolve?department=
     private static final String TAG = "ItemListActivity";
     private boolean mTwoPane;
     private LinearLayoutManager mLayoutManager;
@@ -54,16 +65,20 @@ public class ItemListActivity extends AppCompatActivity {
     private List<MyDataset> listItems;
     Context acticityContext = this;
     private DrawerLayout mDrawerLayout;
+    String username;
+
+    final String URL_CREATE = HOST+"/cappcreate?created=True&department=";
+    final String URL_RES = HOST+"/cappallresolve?department=";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         Log.d(TAG, "onCreate: ItemListActivity started");
-        String username = getIntent().getStringExtra("username");
+        username = getIntent().getStringExtra("username");
         Log.d(TAG, "onCreate: username="+username);
 
-        final String URL_CREATE = "172.16.234.109:5000/capp?create=True&department="+username;
+
 
         Log.d(TAG, "onCreate: called oncreate from start");
 //        Twitter.initialize(this);
@@ -114,10 +129,14 @@ public class ItemListActivity extends AppCompatActivity {
                         // close drawer when item is tapped
                         mDrawerLayout.closeDrawers();
 
-                        if(menuItem.getItemId() == R.id.open_complaints)
+                        if(menuItem.getItemId() == R.id.open_complaints){
+//                            listItems.clear();
                             mDrawerLayout.closeDrawers();
-                        else if(menuItem.getItemId() == R.id.resolved_complaints){
+                            refreshRecyclerViewData(username);
+                        } else if (menuItem.getItemId() == R.id.resolved_complaints){
+//                            listItems.clear();
                             mDrawerLayout.closeDrawers();
+                            refreshRecyclerViewDataRes(username);
 //                            Intent intent = new Intent(ItemListActivity.this, ResolvedItemListActivity.java);
                         }
                         // Add code here to update the UI based on the item selected
@@ -139,25 +158,29 @@ public class ItemListActivity extends AppCompatActivity {
 
         listItems = new ArrayList<>();
 
-        for (int i=0; i<=10; i++) {
-            MyDataset listItem = new MyDataset(
-                    i,
-                    "Complaint Dept",
-                    "Complaint Complaint Complaint " + i,
-                    "example@google.com",
-                    "pts" + i,
-                    "1200" + i,
-                    "Train Name: " + i,
-                    "S/0" + i,
-                    "Station: " + i,
-                    "temp.link/" + i,
-                    0,
-                    1,
-                    "HH:MM"
-            );
+        loadRecyclerViewData(URL_CREATE + username);
 
-            listItems.add(listItem);
-        }
+        Log.d(TAG, "onCreate: return form loadRecyclerViewData");
+
+//        for (int i=0; i<=10; i++) {
+//            MyDataset listItem = new MyDataset(
+//                    i,
+//                    "Complaint Dept",
+//                    "Complaint Complaint Complaint " + i,
+//                    "example@google.com",
+//                    "pts" + i,
+//                    "1200" + i,
+//                    "Train Name: " + i,
+//                    "S/0" + i,
+//                    "Station: " + i,
+//                    "temp.link/" + i,
+//                    0,
+//                    1,
+//                    "HH:MM"
+//            );
+//
+//            listItems.add(listItem);
+//        }
 
 
 //        mAdapter = new SimpleItemRecyclerViewAdapter(this, mTwoPane, this, listItems);
@@ -180,7 +203,10 @@ public class ItemListActivity extends AppCompatActivity {
                 mDrawerLayout.openDrawer(GravityCompat.START);
                 return true;
             case R.id.refresh:
-                refreshRecyclerViewData();
+                listItems.clear();
+                refreshRecyclerViewData(URL_CREATE + username);
+
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -195,12 +221,20 @@ public class ItemListActivity extends AppCompatActivity {
 //    }
 
 
-    private void refreshRecyclerViewData() {
+    private void refreshRecyclerViewDataRes(String username) {
+        loadRecyclerViewData(URL_RES + username);
+        mAdapter.notifyDataSetChanged();
+    }
 
+    private void refreshRecyclerViewData(String username) {
+        loadRecyclerViewData(URL_CREATE + username);
+        mAdapter.notifyDataSetChanged();
     }
 
 
     private void loadRecyclerViewData(String URL_CREATE) {
+
+        Log.d(TAG, "loadRecyclerViewData: making network call");
         final ProgressDialog progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Loading Complaints");
         progressDialog.show();
@@ -210,28 +244,37 @@ public class ItemListActivity extends AppCompatActivity {
                     @Override
                     public void onResponse(String response) {
                         try {
-                            JSONObject jsonObject = new JSONObject(response);
-                            JSONArray jsonArray = jsonObject.getJSONArray("complaints");
-
+                            JSONArray jsonArray = new JSONArray(response);
+                            Log.d(TAG, "onResponse: JSON:" + jsonArray);
+                            Log.d(TAG, "onResponse: jsonArray.length()="+jsonArray.length());
                             for(int i=0; i<jsonArray.length(); i++) {
+                                Log.d(TAG, "onResponse: enter for loop");
                                 JSONObject jsonComplaint = jsonArray.getJSONObject(i);
+                                Log.d(TAG, "onResponse: jsonComplaint: "+jsonComplaint);
+
+//                                /*
                                 MyDataset item = new MyDataset(
-                                        jsonComplaint.getInt("id"),
-                                        jsonComplaint.getString("dept"),
-                                        jsonComplaint.getString("query"),
-                                        jsonComplaint.getString("email"),
-                                        jsonComplaint.getString("pts"),
+                                        jsonComplaint.getBoolean("resolved"),
                                         jsonComplaint.getString("train-no"),
-                                        jsonComplaint.getString("train-name"),
-                                        jsonComplaint.getString("seat-no"),
-                                        jsonComplaint.getString("station"),
                                         jsonComplaint.getString("link"),
-                                        jsonComplaint.getInt("resolved"),
-                                        jsonComplaint.getInt("new"),
-                                        jsonComplaint.getString("time")
+                                        jsonComplaint.getString("query"),
+                                        jsonComplaint.getString("pts"),
+                                        jsonComplaint.getInt("id"),
+                                        jsonComplaint.getString("train-name"),
+                                        jsonComplaint.getString("station"),
+                                        jsonComplaint.getString("seat-no"),
+                                        jsonComplaint.getString("department"),
+                                        jsonComplaint.getBoolean("new"),
+                                        jsonComplaint.getString("email"),
+                                        "HH:MM"
                                 );
+//                                */
                             listItems.add(item);
+                                Log.d(TAG, "onResponse: in response for loop");
                             }
+                            Log.d(TAG, "onResponse: dismissing progressdialog");
+                            progressDialog.dismiss();
+                            Log.d(TAG, "onResponse: progressdialog dismissed");
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -242,9 +285,13 @@ public class ItemListActivity extends AppCompatActivity {
                 progressDialog.dismiss();
                 Log.d(TAG, "onErrorResponse: volley error");
             }
+
         });
+
         RequestQueue requestQueue = Volley.newRequestQueue(this);
+        Log.d(TAG, "loadRecyclerViewData: requestQueue");
         requestQueue.add(stringRequest);
+        Log.d(TAG, "loadRecyclerViewData: after returnQueue");
     }
 
 
@@ -366,7 +413,7 @@ public class ItemListActivity extends AppCompatActivity {
 
 //            Log.d(TAG, "onBindViewHolder: string" + listItem.toString());
 
-            if(listItem.getNewComplaint()==0)
+            if(listItem.getNewComplaint()==false)
                 holder.itemView.setBackgroundColor((int)R.color.gray);
 
             holder.itemView.setTag(position);

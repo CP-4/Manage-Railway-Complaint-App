@@ -10,34 +10,48 @@ import java.io.Serializable;
 
 public class MyDataset implements Serializable{
 
-    public int complaintId;
-    private String complaintDept;
-    private String query;
-    private String email;
-    private String pts;
+    private Boolean resolved;
     private String trainNum;
-    private String trainName;
-    private String seatNo;
-    private String station;
     private String complaintLink;
-    private int resolved;
-    private int newComplaint;
+    private String query;
+    private String pts;
+    public int complaintId;
+    private String trainName;
+    private String station;
+    private String seatNo;
+    private String complaintDept;
+    private Boolean newComplaint;
+    private String email;
     private String time;
 
+    /*
+    "resolved": false,
+    "train-no": null,
+    "link": "sdadas",
+    "query": "0",
+    "pts": "12569",
+    "id": 1,
+    "train-name": null,
+    "station": "Vadodara",
+    "seat-no": "s2",
+    "department": "money",
+    "new": true,
+    "email": "adasda"
+     */
 
-    public MyDataset(int complaintId, String complaintDept, String query, String email, String pts, String trainNum, String trainName, String seatNo, String station, String complaintLink, int resolved, int newComplaint, String time) {
-        this.complaintId = complaintId;
-        this.complaintDept = complaintDept;
-        this.query = query;
-        this.email = email;
-        this.pts = pts;
-        this.trainNum = trainNum;
-        this.trainName = trainName;
-        this.seatNo = seatNo;
-        this.station = station;
-        this.complaintLink = complaintLink;
+    public MyDataset(Boolean resolved, String trainNum, String complaintLink, String query, String pts, int complaintId, String trainName, String station, String seatNo, String complaintDept, Boolean newComplaint, String email, String time) {
         this.resolved = resolved;
+        this.trainNum = trainNum;
+        this.complaintLink = complaintLink;
+        this.query = query;
+        this.pts = pts;
+        this.complaintId = complaintId;
+        this.trainName = trainName;
+        this.station = station;
+        this.seatNo = seatNo;
+        this.complaintDept = complaintDept;
         this.newComplaint = newComplaint;
+        this.email = email;
         this.time = time;
         if (time.isEmpty()) {
             time = "HH:MM";
@@ -84,11 +98,11 @@ public class MyDataset implements Serializable{
         return complaintLink;
     }
 
-    public int getResolved() {
+    public Boolean getResolved() {
         return resolved;
     }
 
-    public int getNewComplaint() {
+    public Boolean getNewComplaint() {
         return newComplaint;
     }
 

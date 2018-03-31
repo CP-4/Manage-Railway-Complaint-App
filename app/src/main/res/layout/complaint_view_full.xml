@@ -98,10 +98,13 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/text_view_link"
                 android:layout_below="@id/text_view_train_no"
-                android:layout_marginTop="8dp"
-                android:layout_marginStart="16dp"
+                android:paddingTop="8dp"
+                android:paddingLeft="16dp"
                 android:text="Tweet Link:"
-                android:layout_marginBottom="16dp"/>
+                android:autoLink="web"
+                android:paddingRight="16dp"
+                android:paddingBottom="8dp"
+                android:layout_marginBottom="8dp"/>
 
             <View
                 android:layout_width="match_parent"
@@ -110,6 +113,7 @@
                 android:layout_below="@id/text_view_link"
                 android:layout_marginTop="0dp"
                 android:background="@android:color/darker_gray"
+                android:clickable="true"
                 android:id="@+id/complaint_div3" />
 
 

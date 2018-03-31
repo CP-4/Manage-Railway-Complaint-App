@@ -3,12 +3,14 @@ package com.epoch.android.complaintlog;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.NavUtils;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
@@ -30,6 +32,12 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+
 /**
  * An activity representing a single Item detail screen. This
  * activity is only used on narrow width devices. On tablet-size devices,
@@ -40,17 +48,22 @@ public class ItemDetailActivity extends AppCompatActivity {
 
     private static final String TAG = "ItemDetailActivity";
 
+    public static final String HOST = "http://192.168.43.52:5000";
+
     private TextView textViewComplaintId;
     private TextView textViewComplaint;
     private TextView textViewTime;
     private Button buttonMarkResolved;
     private Spinner spinnerForward;
-    private static final String URL_RESOLVED = "0.0.0.0";
-    private static final String URL_READ = "0.0.0.0";
+    private static final String URL_RESOLVED = HOST+"/cappshaw?id=";
+    private static final String URL_READ = HOST+"/cappmark?id=";
+    private static final String URL_FORWARD = HOST+"/cappresolve?id="; //department=
     Activity activity = new Activity();
     private TextView textViewStation;
     private TextView textViewTrainNo;
     private TextView textViewLink;
+    ArrayList<String > forwardList = new ArrayList<String >();
+    String colors[] = {"Forward to:", "cleanliness", "booking", "electric", "irctc_care", "irctc_staff", "late", "medical", "none", "security", "staff", "water"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,7 +73,7 @@ public class ItemDetailActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         Log.d(TAG, "onCreate: "+TAG);
 
-        callApi(URL_READ);
+
 
         Bundle bundle = getIntent().getExtras();
         final MyDataset item = (MyDataset) getIntent().getSerializableExtra("MyDataset");
@@ -79,19 +92,45 @@ public class ItemDetailActivity extends AppCompatActivity {
         String holder = item.getTrainNum()+"/"+item.getTrainName();
         textViewTrainNo.setText(holder);
         textViewLink.setText(item.getComplaintLink());
-
         buttonMarkResolved = findViewById(R.id.button_mark_resolved);
         spinnerForward = findViewById(R.id.spinner);
 
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
-                R.array.planets_array, android.R.layout.simple_spinner_item);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerForward.setAdapter(adapter);
+        callApi(URL_READ+item.getComplaintId());
+
+//        getForwardList(URL_FORWARD);
+
+        ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(this,   android.R.layout.simple_spinner_item, colors);
+        spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item); // The drop down view
+        spinnerForward.setAdapter(spinnerArrayAdapter);
+
+
+        spinnerForward.setAdapter(spinnerArrayAdapter);
+
+
 
         spinnerForward.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                Toast.makeText(ItemDetailActivity.this, "Forwarding to " + adapterView.getItemIdAtPosition(i), Toast.LENGTH_SHORT).show();
+            public void onItemSelected(AdapterView<?> adapterView, View view, final int i, long l) {
+                if(i>0){
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(ItemDetailActivity.this);
+                    builder.setMessage("Forward complaint to " + colors[i] + "?");
+
+                    builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            // User clicked OK button
+                            callApi(URL_FORWARD+ item.getComplaintId() + "&department="+colors[i]);
+                            Toast.makeText(ItemDetailActivity.this, "Forwarding to " + colors[i] + "...", Toast.LENGTH_SHORT).show();
+                            NavUtils.navigateUpFromSameTask(ItemDetailActivity.this);
+                        }
+                    });
+                    builder.setNegativeButton("Not yet", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            // User cancelled the dialog
+                        }
+                    });
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                }
             }
 
             @Override
@@ -105,11 +144,26 @@ public class ItemDetailActivity extends AppCompatActivity {
             public void onClick(View view) {
 //                Context context = view.getContext();
 //                Intent intent = new Intent(context, ItemListActivity.class);
-//                    intent.putExtra(ItemDetailFragment.ARG_ITEM_ID, item.getComplaintIdString());
-                callApi(URL_RESOLVED);
-                item.complaintId = 100;
-                NavUtils.navigateUpFromSameTask(ItemDetailActivity.this);
+//                    intent.putExtra(ItemDetailFragment.ARG_ITEM_ID, item.getComplaintIdString(
+//                NavUtils.navigateUpFromSameTask(ItemDetailActivity.this);
+                final AlertDialog.Builder builder = new AlertDialog.Builder(ItemDetailActivity.this);
+                builder.setMessage("Close the complaint?");
 
+                builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        // User clicked OK button
+                        callApi(URL_RESOLVED+item.getComplaintId());
+                        NavUtils.navigateUpFromSameTask(ItemDetailActivity.this);
+
+                    }
+                });
+                builder.setNegativeButton("Not yet", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        // User cancelled the dialog
+                    }
+                });
+                AlertDialog dialog = builder.create();
+                dialog.show();
             }
         });
 
@@ -150,6 +204,54 @@ public class ItemDetailActivity extends AppCompatActivity {
 //                    .add(R.id.item_detail_container, fragment)
 //                    .commit();
 //        }
+    }
+
+    private void getForwardList(String URL) {
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, URL,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+
+//                        try {
+//                            ArrayList<String> forwardList = new ArrayList<String>();
+//                            forwardList.add("Forward to:");
+//                            JSONObject jsonObject = new JSONObject(response);
+//                            JSONArray jsonArray = jsonObject.getJSONArray("complaints");
+//
+//                            for(int i=0; i<jsonArray.length(); i++) {
+//                                JSONObject jsonComplaint = jsonArray.getJSONObject(i);
+//                                MyDataset item = new MyDataset(
+//                                        jsonComplaint.getInt("id"),
+//                                        jsonComplaint.getString("dept"),
+//                                        jsonComplaint.getString("query"),
+//                                        jsonComplaint.getString("email"),
+//                                        jsonComplaint.getString("pts"),
+//                                        jsonComplaint.getString("train-no"),
+//                                        jsonComplaint.getString("train-name"),
+//                                        jsonComplaint.getString("seat-no"),
+//                                        jsonComplaint.getString("station"),
+//                                        jsonComplaint.getString("link"),
+//                                        jsonComplaint.getInt("resolved"),
+//                                        jsonComplaint.getInt("new"),
+//                                        jsonComplaint.getString("time")
+//                                );
+//                                listItems.add(item);
+//                            forwardList.add(item);
+//                        } catch (JSONException e) {
+//                            e.printStackTrace();
+//                        }
+
+
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+            }
+        });
+
+        RequestQueue requestQueue = Volley.newRequestQueue(this);
+        requestQueue.add(stringRequest);
     }
 
     private void callApi(String URL) {
